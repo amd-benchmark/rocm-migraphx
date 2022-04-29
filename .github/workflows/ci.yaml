@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Check new image
         id: chk_img
-        if: TEST == true
+        if: ${{ env.TEST }} == true
         run: exit 1
   build_image:
     name: Build New Image
