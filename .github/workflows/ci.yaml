@@ -1,0 +1,28 @@
+on:
+  push:
+    branches: [main]
+env:
+  TEST: false
+
+name: MIGraphX Benchmark test
+
+jobs: 
+  check_image_version:
+    name: Check Image Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check new image
+        id: chk_img
+        if: TEST == true
+        run: exit 1
+  build_image:
+    name: Build New Image
+    runs-on: self-hosted
+    needs: check_image_version
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Docker build
+        run: docker build -t amd-benchmark:main-${GITHUB_SHA::7} -f ./dockerfiles/dockerfile-ort
+
+     
