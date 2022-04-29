@@ -23,6 +23,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Docker build
-        run: docker build -t amd-benchmark:main-${GITHUB_SHA::7} -f ./dockerfiles/dockerfile-ort .
+        run: sudo docker build -t amd-benchmark:main-${GITHUB_SHA::7} -f ./dockerfiles/dockerfile-ort .
 
      
