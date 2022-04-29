@@ -2,7 +2,7 @@ on:
   push:
     branches: [main]
 env:
-  TEST: true
+  TEST: false
 
 name: MIGraphX Benchmark test
 
@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Check new image
         id: chk_img
-        if: ${{ env.TEST }} == true
+        if: ${{ env.TEST == true }}
         run: exit 1
   build_image:
     name: Build New Image
