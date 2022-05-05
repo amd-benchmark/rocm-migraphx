@@ -10,10 +10,10 @@ ROCM_BASE=${ROCM_BASE:="rocm/dev-ubuntu-18.04:${ROCM_RELEASE}"}
 BUILD_NAVI=${BUILD_NAVI:="0"}
 DOCKERIMAGE=${DOCKERIMAGE:="rocm-migraphx:${ROCM_RELEASE}"}
 
-if [ `id -u` != 0 ]; then
-    echo script should be run as root
-    exit 0
-fi
+# if [ `id -u` != 0 ]; then
+#     echo script should be run as root
+#     exit 0
+# fi
 
 cd ../dockerfiles
 DOCKERFILE=dockerfile.`date '+%Y-%m-%d'`
