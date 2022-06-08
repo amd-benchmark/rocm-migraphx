@@ -1,0 +1,21 @@
+ARG build_navi=0
+ARG base_image
+FROM ${base_image}
+RUN sed -e s/debian/ROCM_RELEASE/g /etc/apt/sources.list.d/rocm.list > /etc/apt/sources.list.d/rocmROCM_RELEASE.list
+RUN rm /etc/apt/sources.list.d/rocm.list
+ENV DEBIAN_FRONTEND=noninteractive
+ENV BUILD_NAVI=${build_navi}
+RUN apt update && apt install -y git cmake python3-dev python3-pip zlib1g-dev unzip autogen autoconf libtool wget
+RUN apt update && apt install -y libnuma-dev rocm-cmake rocm-libs miopen-hip
+RUN apt update && apt install -y libopencv-dev
+RUN mkdir /src
+RUN cd /src && git clone https://github.com/migraphx-benchmark/AMDMIGraphX
+RUN cd /src && git clone https://github.com/migraphx-benchmark/rocm-migraphx
+RUN cd /src/rocm-migraphx/scripts && ./build_prereqs.sh
+COPY half.hpp /usr/local/include/half.hpp
+# Workaround for broken cmake in hip's binary package
+# RUN sed -i -e 's/hcc::hccrt;hcc::hc_am//g' /opt/rocm/hip/lib/cmake/hip/hip-targets-release.cmake
+ENV LD_LIBRARY_PATH=/usr/local/lib:
+RUN cd /src/rocm-migraphx/scripts && ./build_migraphx.sh
+RUN cd /src/rocm-migraphx/scripts && ./build_migraphx_cpu.sh
+RUN cd /src/rocm-migraphx/tools/migx && ./build_migx.sh

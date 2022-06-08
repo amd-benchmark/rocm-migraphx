@@ -29,7 +29,7 @@ if [ "$USE_RBUILD" = "0" ]; then
 	export LD_LIBRARY_PATH=/usr/local/lib:
     fi
 
-    make -j16
+    make -j
 else
     pip3 install https://github.com/RadeonOpenCompute/rbuild/archive/master.tar.gz
     rbuild build -d depend -B build $BUILD_FLAGS $CMAKEFLAGS --cxx=/opt/rocm/llvm/bin/clang++
