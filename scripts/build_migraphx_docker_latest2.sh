@@ -1,4 +1,5 @@
 #!/bin/bash
+date
 set -x
 DATESTAMP=`date '+%Y%m%d'`
 BUILD_NAVI=${BUILD_NAVI:="0"}
@@ -6,7 +7,7 @@ BRANCH=${BRANCH:="develop"}
 DOCKERIMAGE=${DOCKERIMAGE:="rocm-migraphx:$DATESTAMP"}
 
 if [ "$BUILD_NAVI" = "0" ]; then
-    BASE=${BASE:="rocm-migraphx:5.1"}
+    BASE=${BASE:="rocm-migraphx:test"}
 else
     BASE=${BASE:="rocm-migraphx:5.1n"}
 fi
@@ -23,4 +24,4 @@ if [ "$BUILD_NAVI" = "0" ]; then
 else
     docker build -t $DOCKERIMAGE}n --no-cache --build-arg BRANCH=${BRANCH} --build-arg DOCKERBASE=${BASE} --build-arg MIOPENTUNE=${MIOPENTUNE} -f ../dockerfiles/dockerfile-daily2 .
 fi
-
+date
