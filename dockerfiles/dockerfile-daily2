@@ -9,4 +9,4 @@ RUN cd /src/AMDMIGraphX && /src/rocm-migraphx/scripts/build_migraphx2.sh
 COPY miopen-rocm51 /root/.config/miopen/
 # Build the migx driver
 #RUN cd /src/rocm-migraphx/tools/migx && git pull && ./build_migx.sh
-RUN ln -sf /usr/bin/python3.8 /usr/bin/python3 && pip3 install onnx==1.7.0
+RUN ln -sf /usr/bin/python3.8 /usr/bin/python3 && pip3 install setuptools onnx==1.7.0
