@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # saved model directory mounted to the docker image
-SAVED_MODELS=${SAVED_MODELS:="/home/mev/source/rocm-migraphx/saved-models"}
-TEST_RESULTDIR=${TEST_RESULTDIR:="/home/mev/source/rocm-migraphx/test-results"}
+SAVED_MODELS=${SAVED_MODELS:="/data/source/saved-models"}
+TEST_RESULTDIR=${TEST_RESULTDIR:="/data/source/rocm-migraphx/test-results"}
 AMDMIGRAPHX=${AMDMIGRAPHX:="/src/AMDMIGraphX"}
 TARGETOPT=""
 MIGX=${MIGX:="/src/rocm-migraphx/tools/migx/build/migx"}
