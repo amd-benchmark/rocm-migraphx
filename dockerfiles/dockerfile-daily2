@@ -1,4 +1,4 @@
-ARG DOCKERBASE=rocm-migraphx:5.1
+ARG DOCKERBASE=rocm-migraphx:test
 FROM $DOCKERBASE
 ARG BRANCH=develop
 RUN cd /src/AMDMIGraphX && git pull && git checkout ${BRANCH}
