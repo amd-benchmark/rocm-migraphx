@@ -6,6 +6,7 @@ ARG branch="develop"
 ARG build_type="Release"
 
 WORKDIR /workspace
+
 # pre-requisites
 RUN apt update && apt install -y git wget software-properties-common lsb-release python3-dev python3-numpy python3-setuptools python3-wheel python3-pip
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
@@ -24,7 +25,7 @@ RUN cd /workspace/migraphx/build && dpkg -i *.deb
 
 # build ONNX runtime wheel package
 COPY patch.enable_gfx1030 /workspace
-RUN git clone --branch development https://github.com/migraphx-benchmark/onnxruntime.git
+RUN git clone --recursive --branch development https://github.com/migraphx-benchmark/onnxruntime.git
 RUN patch onnxruntime/cmake/onnxruntime_providers.cmake < patch.enable_gfx1030
 RUN cd onnxruntime && ./build.sh --parallel --cmake_extra_defines ONNXRUNTIME_VERSION=`cat ./VERSION_NUMBER` --config $build_type --skip_tests --build_wheel --use_migraphx --use_rocm --rocm_version=5.1.3 --rocm_home /opt/rocm
 RUN pip3 install /workspace/onnxruntime/build/Linux/$build_type/dist/*.whl
