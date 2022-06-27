@@ -2,19 +2,29 @@ import os
 import pandas
 import pathlib
 import argparse
-from colorama import Fore,Style
-from tabulate import tabulate
+import numpy
+
+#set symbols
+s_green = ":white_check_mark:"
+s_red = ":red_circle:"
+s_yellow = ":high_brightness:"
+s_nok = ":x:"
 
 #set execution arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--test', type=str, required=True, help="Path to test results")
+parser.add_argument('-r', '--range', type=str, required=True, help="Path to threshold config")
 args = parser.parse_args()
 
 #get script path
 script_path = os.path.dirname(os.path.realpath(__file__))
 
+#get threshold
+os.chdir(args.range)
+threshold = pandas.read_csv('threshold.csv', header=None, usecols=[1], skiprows=[0])
+
 #find path to lastest test result
-find_last = max(pathlib.Path(args.test).glob('*/'), key=os.path.getmtime)
+find_last = max(pathlib.Path(args.test).glob('perf*'), key=os.path.getmtime)
 os.chdir(find_last)
 
 #read lastest test result data and commit
@@ -24,7 +34,7 @@ with open('commit.txt') as git:
 git.close()
 
 #find path to 2nd lastest test result
-find_2last = sorted(pathlib.Path(args.test).glob('*/'), key=os.path.getmtime)[-2]
+find_2last = sorted(pathlib.Path(args.test).glob('perf*'), key=os.path.getmtime)[-2]
 os.chdir(find_2last)
 
 #read 2nd lastest test result data and commit
@@ -33,53 +43,52 @@ with open('commit.txt') as git:
     commit2 = str(git.readlines(1))[9:15]
 git.close()
 
-print(f"Comparing commits: {commit1} to {commit2}")
-
 #Combine two dataframes
-combined = pandas.concat([data1,data2], axis=1, ignore_index=True)
+combined = pandas.concat([data1,data2,threshold], axis=1, ignore_index=True)
 
 #Rename columns
-combined.columns = ['Test','Batch','Time new','Time old']
+combined.columns = ['Test','Batch','Time new','Time old','Threshold']
 
 #Calculate rates and diff
-combined['Rate new'] = combined['Batch'] * 1000 / combined['Time new']
-combined['Rate old'] = combined['Batch'] * 1000 / combined['Time old']
-combined['Diff'] = combined['Rate new'] / combined['Rate old'] - 1
-
-l_formated = combined.copy()
+Rate_new = f'Rate new <br />{commit1}'
+Rate_old = f'Rate old <br />{commit2}'
+combined[Rate_new] = combined['Batch'] * 1000 / combined['Time new']
+combined[Rate_old] = combined['Batch'] * 1000 / combined['Time old']
+combined['Diff_tmp'] = combined[Rate_new] / combined[Rate_old] - 1
 
 #Format columns for markdown
-def symbol_md(val):
-    if val > 0:
-        val = "{0:.2%}".format(val)
-        val = f":white_check_mark: {val}"
-    elif val < 0:
-        val = "{0:.2%}".format(val)
-        val = f":red_circle: {val}"
-    return val
-combined['Diff']=combined['Diff'].apply(symbol_md)
+conditions = [combined['Diff_tmp'].abs() < combined['Threshold'], combined['Diff_tmp'] > combined['Threshold'], combined['Diff_tmp'] < combined['Threshold'], combined['Diff_tmp'].isnull()]
+choices = [s_green,s_yellow,s_red,s_nok]
+combined['Compare'] = numpy.select(conditions, choices)
+def conv_to_per(val):
+    val = "{0:.2%}".format(val)
+    return(val)
+combined['Diff_tmp'] = combined['Diff_tmp'].apply(conv_to_per)
+combined['Diff'] = combined.agg('{0[Compare]} {0[Diff_tmp]}'.format, axis=1)
 
 def format_rate(val):
     return str('{:,.2f}'.format(val))
-combined['Rate new'] = combined['Rate new'].apply(format_rate)
-combined['Rate old'] = combined['Rate old'].apply(format_rate)
+combined[Rate_new] = combined[Rate_new].apply(format_rate)
+combined[Rate_old] = combined[Rate_old].apply(format_rate)
 
-#Format columns for log
-def check_diff(val):
-    if val < 0:
-        color = Fore.RED
-    else:
-        color = Fore.GREEN
-    return color + str('{0:.2%}'.format(val)) + Style.RESET_ALL
-l_formated['Diff']=l_formated['Diff'].apply(check_diff)
+#Status check
+check_red = (combined.Compare==s_red).sum()
+check_nok = (combined.Compare==s_nok).sum()
+check_yellow = (combined.Compare==s_yellow).sum()
 
-#Print out table for log
-def pprint_df(dframe):
-    print(tabulate(dframe, headers='keys', tablefmt='grid', showindex=False, colalign=('left','right','right','right')))
-
-pprint_df(l_formated[['Test','Rate new','Rate old','Diff']])
+if check_red >= 1 or check_nok >= 1:
+    status = f'This build is not recommended to merge {s_red}'
+elif check_yellow >= 1:
+    status = f'Check results before merge {s_yellow}'
+else:
+    status = f'This build is OK for merge {s_green}'
 
 #Markdown for comment
 os.chdir(script_path)
-m_formated = combined.drop(columns=['Batch','Time new','Time old'])
-print(m_formated.to_markdown('temp.md', index=False, colalign=('left','right','right','right')))
+formated = combined.drop(columns=['Batch','Time new','Time old','Threshold','Diff_tmp','Compare'])
+print(formated.to_markdown('temp.md', index=False, colalign=('left','right','right','right')))
+
+#Append status to markdown
+md_file = open('temp.md', 'a')
+md_file.write(f'\n\n\n{status}')
+md_file.close()
